@@ -24,16 +24,27 @@ function createCommentsList(comments) {
 
 async function fetchCommentsForPost() {
   const postId = loadCommentsBtnElement.dataset.postid;
-  const response = await fetch(`/posts/${postId}/comments`);
-  const responseData = await response.json();
 
-  if (responseData && responseData.length > 0) {
-    const commentsListElement = createCommentsList(responseData);
-    commentsSectionElement.innerHTML = "";
-    commentsSectionElement.appendChild(commentsListElement);
-  } else {
-    commentsSectionElement.firstElementChild.textContent =
-      "We could not find any comments. Maybe add one?";
+  try {
+    const response = await fetch(`/posts/${postId}/comments`);
+
+    if (!response.ok) {
+      alert("Something went wrong - could not fetch comments!");
+      return;
+    }
+
+    const responseData = await response.json();
+
+    if (responseData && responseData.length > 0) {
+      const commentsListElement = createCommentsList(responseData);
+      commentsSectionElement.innerHTML = "";
+      commentsSectionElement.appendChild(commentsListElement);
+    } else {
+      commentsSectionElement.firstElementChild.textContent =
+        "We could not find any comments. Maybe add one?";
+    }
+  } catch (error) {
+    alert("Getting comments failed!");
   }
 }
 
@@ -49,15 +60,23 @@ async function saveComment(event) {
     text: enteredText,
   };
 
-  const response = await fetch(`/posts/${postId}/comments`, {
-    method: "POST",
-    body: JSON.stringify(comment),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  try {
+    const response = await fetch(`/posts/${postId}/comments`, {
+      method: "POST",
+      body: JSON.stringify(comment),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-  fetchCommentsForPost();
+    if (response.ok) {
+      fetchCommentsForPost();
+    } else {
+      alert("Something went wrong - please try again later!");
+    }
+  } catch (error) {
+    alert("Something went wrong - please try again later!");
+  }
 }
 
 loadCommentsBtnElement.addEventListener("click", fetchCommentsForPost);
